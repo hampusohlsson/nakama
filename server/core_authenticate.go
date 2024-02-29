@@ -151,8 +151,14 @@ func AuthenticateCustom(ctx context.Context, logger *zap.Logger, db *sql.DB, cus
 		return "", "", false, status.Error(codes.NotFound, "User account not found.")
 	}
 
+	// Set the user id as the custom id
+	var userID string
+	if customUUID, err := uuid.FromString(customID); err == nil {
+		userID = customUUID.String()
+	} else {
+		return "", "", false, status.Error(codes.InvalidArgument, "Custom ID is not a valid UUID.")
+	}
 	// Create a new account.
-	userID := uuid.Must(uuid.NewV4()).String()
 	query = "INSERT INTO users (id, username, custom_id, create_time, update_time) VALUES ($1, $2, $3, now(), now())"
 	result, err := db.ExecContext(ctx, query, userID, username, customID)
 	if err != nil {
